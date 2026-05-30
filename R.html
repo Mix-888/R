@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>เกมอ่านค่าสีตัวต้านทาน - โดย ครูทศกฤษณ์ จิตติปกรณ์รักษ์</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap');
+        body { font-family: 'Sarabun', sans-serif; text-align: center; background-color: #f4f7f6; padding: 20px; color: #333; margin: 0; }
+        h1 { color: #2c3e50; font-weight: 700; }
+        .container { max-width: 700px; margin: 0 auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 8px 16px rgba(0,0,0,0.1); }
+        
+        /* Input & Select */
+        input[type="text"], select { padding: 12px; font-size: 18px; border-radius: 8px; border: 1px solid #ccc; width: 80%; margin-bottom: 15px; font-family: 'Sarabun', sans-serif; }
+        
+        /* ปุ่มต่างๆ */
+        .btn { padding: 12px 25px; margin: 8px; font-size: 18px; cursor: pointer; border: none; border-radius: 8px; font-family: 'Sarabun', sans-serif; font-weight: 600; transition: 0.2s; }
+        .btn-primary { background-color: #3498db; color: white; }
+        .btn-primary:hover { background-color: #2980b9; }
+        .btn-success { background-color: #2ecc71; color: white; width: 80%; font-size: 20px; }
+        .btn-success:hover { background-color: #27ae60; }
+        .btn-danger { background-color: #e74c3c; color: white; }
+        .btn-danger:hover { background-color: #c0392b; }
+        .btn-warning { background-color: #f39c12; color: white; }
+        .btn-warning:hover { background-color: #d68910; }
+        
+        .choice-btn { display: block; width: 100%; margin: 10px 0; background-color: #fff; color: #333; border: 2px solid #3498db; text-align: left; padding: 15px; font-size: 18px; border-radius: 8px; }
+        .choice-btn:hover { background-color: #ebf5fb; }
+        
+        /* หน้าจอต่างๆ */
+        #menu-area, #game-area, #leaderboard-area { display: none; }
+        
+        /* ตัวต้านทาน */
+        .resistor-wrapper { margin: 30px 0; display: flex; justify-content: center; position: relative; }
+        .wire { width: 50px; height: 8px; background-color: #bdc3c7; margin-top: 26px; }
+        .resistor { width: 240px; height: 60px; background-color: #f4d03f; border-radius: 10px; display: flex; justify-content: space-between; padding: 0 15px; box-sizing: border-box; border: 1px solid #d4ac0d; }
+        .band { height: 100%; width: 20px; }
+
+        /* แถบสถานะ */
+        .status-bar { display: flex; justify-content: space-between; font-size: 18px; font-weight: 600; background: #ecf0f1; padding: 10px 20px; border-radius: 8px; margin-bottom: 20px; }
+        .timer { color: #e74c3c; font-weight: 700; font-size: 20px; }
+        
+        #feedback { font-size: 22px; font-weight: bold; margin: 10px 0; height: 30px; }
+        .correct { color: #27ae60; }
+        .wrong { color: #c0392b; }
+
+        /* ตารางคะแนน */
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; border-bottom: 1px solid #ddd; font-size: 18px; }
+        th { background-color: #3498db; color: white; }
+        tr:hover { background-color: #f1f1f1; }
+        .medal { font-size: 24px; }
+        
+        .footer { margin-top: 30px; font-size: 14px; color: #7f8c8d; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>⚡ เกมอ่านค่าสีตัวต้านทาน ⚡</h1>
+    
+    <div id="login-area" style="display: block;">
+        <h2>ยินดีต้อนรับ!</h2>
+        <p>กรุณาตั้งชื่อผู้เล่นเพื่อเข้าสู่ระบบจัดอันดับ</p>
+        <input type="text" id="player-name" placeholder="กรอกชื่อ-สกุล หรือรหัสนักศึกษา..." maxlength="30">
+        <br>
+        <button class="btn btn-success" onclick="login()">เข้าสู่เกม</button>
+    </div>
+
+    <div id="menu-area">
+        <h2>สวัสดี, <span id="display-player-name" style="color:#3498db;"></span>!</h2>
+        <p>เลือกระดับความยากและโหมดที่ต้องการเล่น (1 รอบ = 10 ข้อ)</p>
+        
+        <select id="difficulty-select">
+            <option value="beginner">🟢 ผู้เริ่มต้น (ไม่จับเวลา, ข้อละ 10 คะแนน)</option>
+            <option value="intermediate">🟡 ปานกลาง (ข้อละ 15 วิ, ข้อละ 15 คะแนน, ผิดหัก 5)</option>
+            <option value="expert">🔴 ผู้เชี่ยวชาญ (ข้อละ 8 วิ, ข้อละ 20 คะแนน, ผิดหัก 10)</option>
+        </select>
+        <br>
+        <button class="btn btn-primary" onclick="startGame(4)">▶ เล่นโหมด 4 แถบสี</button>
+        <button class="btn btn-primary" onclick="startGame(5)">▶ เล่นโหมด 5 แถบสี</button>
+        <br><br>
+        <button class="btn btn-warning" onclick="showLeaderboard()">🏆 ดูตารางคะแนน</button>
+        <button class="btn btn-danger" onclick="logout()">ออกจากระบบ</button>
+    </div>
+
+    <div id="game-area">
+        <div class="status-bar">
+            <span>โหมด: <span id="mode-text"></span> | <span id="level-text"></span></span>
+            <span>ข้อที่: <span id="question-count">1</span>/10</span>
+            <span>คะแนน: <span id="score" style="color:#27ae60;">0</span></span>
+        </div>
+        
+        <div class="timer">เวลา: <span id="timer-display"></span></div>
+
+        <div class="resistor-wrapper">
+            <div class="wire"></div>
+            <div class="resistor" id="resistor-body"></div>
+            <div class="wire"></div>
+        </div>
+
+        <div id="feedback"></div>
+        <div id="choices-container"></div>
+    </div>
+
+    <div id="leaderboard-area">
+        <h2>🏆 กระดานผู้นำ (Top 10) 🏆</h2>
+        <table id="leaderboard-table">
+            <thead>
+                <tr>
+                    <th>อันดับ</th>
+                    <th>ชื่อผู้เล่น</th>
+                    <th>โหมด</th>
+                    <th>ระดับ</th>
+                    <th>คะแนน</th>
+                </tr>
+            </thead>
+            <tbody>
+                </tbody>
+        </table>
+        <br>
+        <button class="btn btn-primary" onclick="backToMenu()">กลับหน้าหลัก</button>
+        <button class="btn btn-danger" onclick="clearLeaderboard()">ล้างข้อมูลคะแนน</button>
+    </div>
+    
+    <div class="footer">
+        พัฒนาสื่อการเรียนการสอนโดย ครูทศกฤษณ์ จิตติปกรณ์รักษ์ | วิทยาลัยเทคนิคเกษตรวิสัย
+    </div>
+</div>
+
+<script>
+    // ข้อมูลตารางสี
+    const colors = [
+        { name: "ดำ", val: 0, hex: "#000000" }, { name: "น้ำตาล", val: 1, hex: "#8B4513" },
+        { name: "แดง", val: 2, hex: "#FF0000" }, { name: "ส้ม", val: 3, hex: "#FFA500" },
+        { name: "เหลือง", val: 4, hex: "#FFFF00" }, { name: "เขียว", val: 5, hex: "#008000" },
+        { name: "น้ำเงิน", val: 6, hex: "#0000FF" }, { name: "ม่วง", val: 7, hex: "#800080" },
+        { name: "เทา", val: 8, hex: "#808080" }, { name: "ขาว", val: 9, hex: "#FFFFFF" }
+    ];
+    const multipliers = [
+        { name: "ดำ", mul: 1, hex: "#000000" }, { name: "น้ำตาล", mul: 10, hex: "#8B4513" },
+        { name: "แดง", mul: 100, hex: "#FF0000" }, { name: "ส้ม", mul: 1000, hex: "#FFA500" },
+        { name: "เหลือง", mul: 10000, hex: "#FFFF00" }, { name: "เขียว", mul: 100000, hex: "#008000" },
+        { name: "น้ำเงิน", mul: 1000000, hex: "#0000FF" }, { name: "ทอง", mul: 0.1, hex: "#FFD700" },
+        { name: "เงิน", mul: 0.01, hex: "#C0C0C0" }
+    ];
+    const tolerances = [
+        { name: "น้ำตาล", tol: "±1%", hex: "#8B4513" }, { name: "แดง", tol: "±2%", hex: "#FF0000" },
+        { name: "ทอง", tol: "±5%", hex: "#FFD700" }, { name: "เงิน", tol: "±10%", hex: "#C0C0C0" }
+    ];
+
+    let playerName = "";
+    let currentMode = 4;
+    let currentLevel = "";
+    let score = 0;
+    let questionCount = 0;
+    let maxQuestions = 10;
+    let correctAnswerStr = "";
+    
+    // อาร์เรย์สำหรับเก็บคำถามที่เคยถามไปแล้วในรอบนี้ เพื่อป้องกันการสุ่มซ้ำ
+    let askedQuestions = [];
+    
+    let timerInterval;
+    let timeLeft = 0;
+    let pointsWin = 0;
+    let pointsLose = 0;
+
+    function showScreen(screenId) {
+        document.getElementById("login-area").style.display = "none";
+        document.getElementById("menu-area").style.display = "none";
+        document.getElementById("game-area").style.display = "none";
+        document.getElementById("leaderboard-area").style.display = "none";
+        document.getElementById(screenId).style.display = "block";
+    }
+
+    function login() {
+        let nameInput = document.getElementById("player-name").value.trim();
+        if (nameInput === "") {
+            alert("กรุณาใส่ชื่อหรือรหัสนักศึกษาก่อนเริ่มเกมครับ!");
+            return;
+        }
+        playerName = nameInput;
+        document.getElementById("display-player-name").innerText = playerName;
+        showScreen("menu-area");
+    }
+
+    function logout() {
+        playerName = "";
+        document.getElementById("player-name").value = "";
+        showScreen("login-area");
+    }
+
+    function backToMenu() {
+        clearInterval(timerInterval);
+        showScreen("menu-area");
+    }
+
+    function startGame(mode) {
+        currentMode = mode;
+        let diffSelect = document.getElementById("difficulty-select");
+        currentLevel = diffSelect.value;
+        
+        let levelTextStr = "";
+        if(currentLevel === "beginner") { pointsWin = 10; pointsLose = 0; levelTextStr = "ผู้เริ่มต้น"; }
+        else if(currentLevel === "intermediate") { pointsWin = 15; pointsLose = 5; levelTextStr = "ปานกลาง"; }
+        else if(currentLevel === "expert") { pointsWin = 20; pointsLose = 10; levelTextStr = "ผู้เชี่ยวชาญ"; }
+
+        score = 0;
+        questionCount = 1;
+        askedQuestions = []; // ล้างประวัติคำถามทุกครั้งที่เริ่มเกมใหม่
+        
+        document.getElementById("score").innerText = score;
+        document.getElementById("mode-text").innerText = mode + " แถบสี";
+        document.getElementById("level-text").innerText = levelTextStr;
+        
+        showScreen("game-area");
+        nextQuestion();
+    }
+
+    function formatOhms(value) {
+        if (value >= 1000000) return (value / 1000000) + " MΩ";
+        if (value >= 1000) return (value / 1000) + " kΩ";
+        return value.toFixed(value % 1 !== 0 ? 2 : 0) + " Ω";
+    }
+
+    function getRandom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+    function generateResistor() {
+        let b1 = getRandom(colors.slice(1, 10)); 
+        let b2 = getRandom(colors);
+        let b3, mul, tol;
+        let value = 0;
+        let bandColors = [];
+
+        if (currentMode === 4) {
+            mul = getRandom(multipliers);
+            tol = getRandom(tolerances.slice(2, 4)); 
+            value = ((b1.val * 10) + b2.val) * mul.mul;
+            bandColors = [b1.hex, b2.hex, mul.hex, tol.hex];
+        } else {
+            b3 = getRandom(colors);
+            mul = getRandom(multipliers.slice(0, 7)); 
+            tol = getRandom(tolerances.slice(0, 2)); 
+            value = ((b1.val * 100) + (b2.val * 10) + b3.val) * mul.mul;
+            bandColors = [b1.hex, b2.hex, b3.hex, mul.hex, tol.hex];
+        }
+
+        let formattedValue = formatOhms(value) + " " + tol.tol;
+        return { formattedValue, bandColors };
+    }
+
+    function nextQuestion() {
+        if(questionCount > maxQuestions) {
+            endGame();
+            return;
+        }
+        
+        document.getElementById("question-count").innerText = questionCount;
+        document.getElementById("feedback").innerText = "";
+        
+        let correctData;
+        // ลูปเช็กว่าคำถามนี้เคยถูกสุ่มออกไปแล้วหรือยัง ถ้าเคยแล้วให้สุ่มใหม่ทันที
+        do {
+            correctData = generateResistor();
+        } while (askedQuestions.includes(correctData.formattedValue));
+        
+        // บันทึกคำถามนี้ลงในประวัติการสุ่ม
+        askedQuestions.push(correctData.formattedValue);
+        correctAnswerStr = correctData.formattedValue;
+
+        let resistorDiv = document.getElementById("resistor-body");
+        resistorDiv.innerHTML = "";
+        correctData.bandColors.forEach((color, index) => {
+            let band = document.createElement("div");
+            band.className = "band";
+            band.style.backgroundColor = color;
+            if (index === correctData.bandColors.length - 1) band.style.marginLeft = "30px";
+            resistorDiv.appendChild(band);
+        });
+
+        // สร้างช้อยส์หลอก โดยต้องไม่ให้ซ้ำกับคำตอบจริง
+        let choices = [correctAnswerStr];
+        while (choices.length < 4) {
+            let fakeData = generateResistor().formattedValue;
+            if (!choices.includes(fakeData)) choices.push(fakeData);
+        }
+        
+        // สลับตำแหน่งตัวเลือก
+        choices.sort(() => Math.random() - 0.5);
+
+        let choicesDiv = document.getElementById("choices-container");
+        choicesDiv.innerHTML = "";
+        choices.forEach(choice => {
+            let btn = document.createElement("button");
+            btn.className = "btn choice-btn";
+            btn.innerText = choice;
+            btn.onclick = () => checkAnswer(choice);
+            choicesDiv.appendChild(btn);
+        });
+
+        startTimer();
+    }
+
+    function startTimer() {
+        clearInterval(timerInterval);
+        let timerDisplay = document.getElementById("timer-display");
+        
+        if(currentLevel === "beginner") {
+            timerDisplay.innerText = "ไม่จำกัด";
+            timerDisplay.style.color = "#2ecc71";
+            return;
+        }
+        
+        timeLeft = currentLevel === "intermediate" ? 15 : 8;
+        timerDisplay.innerText = timeLeft + " วินาที";
+        timerDisplay.style.color = "#e74c3c";
+        
+        timerInterval = setInterval(() => {
+            timeLeft--;
+            timerDisplay.innerText = timeLeft + " วินาที";
+            if(timeLeft <= 0) {
+                clearInterval(timerInterval);
+                timeOutHandler();
+            }
+        }, 1000);
+    }
+
+    function timeOutHandler() {
+        let feedback = document.getElementById("feedback");
+        feedback.innerText = "⏰ หมดเวลา! คำตอบคือ " + correctAnswerStr;
+        feedback.className = "wrong";
+        score = Math.max(0, score - pointsLose);
+        document.getElementById("score").innerText = score;
+        
+        disableChoices();
+        questionCount++;
+        setTimeout(nextQuestion, 2000);
+    }
+
+    function checkAnswer(selected) {
+        clearInterval(timerInterval);
+        disableChoices();
+        
+        let feedback = document.getElementById("feedback");
+        if (selected === correctAnswerStr) {
+            score += pointsWin;
+            feedback.innerText = "🎉 ถูกต้อง! (+" + pointsWin + ")";
+            feedback.className = "correct";
+        } else {
+            score = Math.max(0, score - pointsLose);
+            let lossText = pointsLose > 0 ? " (-" + pointsLose + ")" : "";
+            feedback.innerText = "❌ ผิด! คำตอบคือ " + correctAnswerStr + lossText;
+            feedback.className = "wrong";
+        }
+        document.getElementById("score").innerText = score;
+        questionCount++;
+        setTimeout(nextQuestion, 1500);
+    }
+
+    function disableChoices() {
+        let btns = document.querySelectorAll(".choice-btn");
+        btns.forEach(btn => btn.disabled = true);
+    }
+
+    function endGame() {
+        alert("จบเกม! คุณได้คะแนนทั้งหมด: " + score + " คะแนน");
+        saveScore();
+        showLeaderboard();
+    }
+
+    function saveScore() {
+        let scoresData = JSON.parse(localStorage.getItem("resistorScores")) || [];
+        
+        let levelTH = "";
+        if(currentLevel === "beginner") levelTH = "ผู้เริ่มต้น";
+        if(currentLevel === "intermediate") levelTH = "ปานกลาง";
+        if(currentLevel === "expert") levelTH = "ผู้เชี่ยวชาญ";
+
+        scoresData.push({
+            name: playerName,
+            mode: currentMode,
+            level: levelTH,
+            score: score,
+            date: new Date().toLocaleDateString()
+        });
+
+        scoresData.sort((a, b) => b.score - a.score);
+        localStorage.setItem("resistorScores", JSON.stringify(scoresData));
+    }
+
+    function showLeaderboard() {
+        showScreen("leaderboard-area");
+        let scoresData = JSON.parse(localStorage.getItem("resistorScores")) || [];
+        let tbody = document.querySelector("#leaderboard-table tbody");
+        tbody.innerHTML = "";
+
+        if (scoresData.length === 0) {
+            tbody.innerHTML = "<tr><td colspan='5'>ยังไม่มีข้อมูลคะแนน</td></tr>";
+            return;
+        }
+
+        let top10 = scoresData.slice(0, 10);
+        top10.forEach((data, index) => {
+            let row = document.createElement("tr");
+            
+            let rankIcon = (index + 1);
+            if(index === 0) rankIcon = "<span class='medal'>🥇</span>";
+            if(index === 1) rankIcon = "<span class='medal'>🥈</span>";
+            if(index === 2) rankIcon = "<span class='medal'>🥉</span>";
+
+            row.innerHTML = `
+                <td>${rankIcon}</td>
+                <td><b>${data.name}</b></td>
+                <td>${data.mode} สี</td>
+                <td>${data.level}</td>
+                <td style="color:#27ae60; font-weight:bold;">${data.score}</td>
+            `;
+            tbody.appendChild(row);
+        });
+    }
+
+    function clearLeaderboard() {
+        if(confirm("คุณต้องการล้างข้อมูลกระดานคะแนนทั้งหมดใช่หรือไม่? (ย้อนกลับไม่ได้นะ)")) {
+            localStorage.removeItem("resistorScores");
+            showLeaderboard();
+        }
+    }
+</script>
+
+</body>
+</html>
